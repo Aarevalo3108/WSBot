@@ -4,9 +4,9 @@ const { getMonitor } = require("consulta-dolar-venezuela");
 const BaileysProvider = require('@bot-whatsapp/provider/baileys')
 const MockAdapter = require('@bot-whatsapp/database/mock')
 const schedule = require('node-schedule')
-var dolar = []
 const saludo = ['hola','alo','buenas','saludos']
 const main = async () => {
+  let dolar = []
   const adapterDB = new MockAdapter()
   const adapterFlow = createFlow([flowSaludo, flowDolar,flowCalculo])
   const adapterProvider = createProvider(BaileysProvider)
@@ -27,7 +27,7 @@ const main = async () => {
     minute: 20 // 20 para 20 minutos
   }
   schedule.scheduleJob(rule, async () => {
-    await consulta()
+    await consulta(dolar)
     await sendRate()
   })
 }
@@ -41,8 +41,8 @@ const flowSaludo = addKeyword(saludo)
 const flowDolar = addKeyword(['dolar','dólar'])
 .addAnswer('momento!...🧐',null,
   async (_,{flowDynamic}) =>{
-    await consulta()
-    console.log('mensaje solicitado enviado!')
+    let dolar = [];
+    await consulta(dolar);
     return flowDynamic([{body: '[PAR]: ' + dolar[0] +' Bs.\n[BCV]: ' + dolar[1]+' Bs.'}])
   }
 )
@@ -50,20 +50,18 @@ const flowCalculo = addKeyword(['calcular','calculo','cuenta'])
 .addAnswer('Ingresa un monto en dolares para convertir!. Ejemplo: 7.5',{capture: true},
 async (ctx,{flowDynamic, fallBack}) =>{
     nro = Number(ctx.body)
+    let dolar = [];
     if(!isNaN(nro) && Math.sign(nro) == 1) {
-      console.log('mensaje solicitado enviado!')
-      await consulta()
-      PAR = ctx.body*dolar[0]
-      BCV = ctx.body*dolar[1]
-      return flowDynamic([{body: ctx.body + '$ a Bs es:\n[PAR]: ' + PAR.toFixed(2) +' Bs.\n[BCV]: ' + BCV.toFixed(2)+' Bs.'}])
+      await consulta(dolar)
+      return flowDynamic([{body: ctx.body + '$ a Bs es:\n[PAR]: ' + (ctx.body*dolar[0]).toFixed(2) +' Bs.\n[BCV]: ' + (ctx.body*dolar[1]).toFixed(2)+' Bs.'}])
     }
     else return fallBack()
   }
 )
-async function consulta() {
-dolar[0] = await getMonitor('enparalelovzla', 'price', false)
-  dolar[1] = await getMonitor('bcv', 'price', false)
-  return [dolar[0],dolar[1]]
+async function consulta(array) {
+  array[0] = await getMonitor('enparalelovzla', 'price', false);
+  array[1] = await getMonitor('bcv', 'price', false);
+  return array;
 }
 
 main()
