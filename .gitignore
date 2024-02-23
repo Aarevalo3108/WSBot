@@ -3,3 +3,6 @@
 queue.class.log
 core.class.log
 bot.qr.png
+baileys.log
+package-lock.json
+.eslintrc.js

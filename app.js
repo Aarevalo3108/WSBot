@@ -8,7 +8,7 @@ let dolar = [];
 const main = async () => {
   await consulta(dolar)
   const adapterDB = new MockAdapter()
-  const adapterFlow = createFlow([flowSaludo, flowDolar,flowCalculo])
+  const adapterFlow = createFlow([flowSaludo, flowTasa,flowDolar,flowBolivar])
   const adapterProvider = createProvider(BaileysProvider)
   createBot({
     flow: adapterFlow,
@@ -32,28 +32,39 @@ const main = async () => {
     console.log(`Dolar actualizado!`);
   })
 }
+
 const flowSaludo = addKeyword(['hola','alo','buenas','saludos'])
 .addAnswer
 ([
   `🙌 Hola bienvenido a *DolarBot* (de momento, unica funcion), es un proyecto prueba que estoy desarrollando para enviar mensajes automaticos. Hecho por Angel Arevalo :D.
-   \n- Escribe 💲 *dolar* 💲 la proxima vez si solo deseas saber la tasa de cambio del bolivar/dolar.
-   \n- Escribe 🧮 *calcular* 🧮 si deseas calcular una cantidad en dolares y mostrar su equivalente en Bs.`
+   \n- Escribe 💲 *tasa* o *t* 💲 la proxima vez si solo deseas saber la tasa de cambio del bolivar/dolar.
+   \n- Escribe 🧮 *dolar* o *d* 🧮 si deseas convertir una cantidad en $ y mostrar su equivalente en Bs.
+   \n- Escribe 🧮 *bolivar* o *b* 🧮 si deseas convertir una cantidad en Bs y mostrar su equivalente en $.`
 ])
-const flowDolar = addKeyword(['dolar','dólar'])
+
+const flowTasa = addKeyword(['tasa','precio','t'])
 .addAnswer('momento!...🧐',null,
   async (_,{flowDynamic}) =>{
     return flowDynamic([{body: '[PAR]: ' + dolar[0] +' Bs.\n[BCV]: ' + dolar[1]+' Bs.'}])
   }
 )
-const flowCalculo = addKeyword(['calcular','calculo','cuenta'])
-.addAnswer('Ingresa un monto en dolares para convertir!. Ejemplo: 7.5',{capture: true},
-async (ctx,{flowDynamic, fallBack}) =>{
+
+const flowDolar = addKeyword(['dolar','d']).addAnswer('🟢Ingresa un monto en dolares para convertir!. Ejemplo: 7.5🟢',{capture: true},
+  async (ctx,{flowDynamic, fallBack}) =>{
     if(!isNaN(Number(ctx.body)) && Math.sign(Number(ctx.body)) == 1) {
-      return flowDynamic([{body: ctx.body + '$ a Bs es:\n[PAR]: ' + (ctx.body*dolar[0]).toFixed(2) +' Bs.\n[BCV]: ' + (ctx.body*dolar[1]).toFixed(2)+' Bs.'}])
+      return flowDynamic([{body: `${ctx.body}$ a Bs es:\n[PAR]: ${(ctx.body*dolar[0]).toFixed(2)} Bs.\n[BCV]: ${(ctx.body*dolar[1]).toFixed(2)} Bs.`}])
     }
     else return fallBack()
-  }
-)
+})
+
+const flowBolivar = addKeyword(['bolivar','b']).addAnswer('🔵Ingresa un monto en bolivares para convertir!. Ejemplo: 350🔵',{capture: true},
+  async (ctx,{flowDynamic, fallBack}) =>{
+    if(!isNaN(Number(ctx.body)) && Math.sign(Number(ctx.body)) == 1) {
+      return flowDynamic([{body: `${ctx.body} Bs a $ es:\n[PAR]: ${(ctx.body/dolar[0]).toFixed(2)}$\n[BCV]: ${(ctx.body/dolar[1]).toFixed(2)}$`}])
+    }
+    else return fallBack()
+})
+
 async function consulta(array) {
   array[0] = await getMonitor('enparalelovzla', 'price', false);
   array[1] = await getMonitor('bcv', 'price', false);
