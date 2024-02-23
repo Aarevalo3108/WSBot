@@ -13,10 +13,11 @@
         "@bot-whatsapp/database": "latest",
         "@bot-whatsapp/portal": "latest",
         "@bot-whatsapp/provider": "latest",
-        "@whiskeysockets/baileys": "^6.4.0",
+        "@whiskeysockets/baileys": "6.5.0",
         "consulta-dolar-venezuela": "^1.1.0",
         "node-schedule": "^2.1.1",
-        "wa-sticker-formatter": "4.3.2"
+        "wa-sticker-formatter": "4.4.4",
+        "cache-manager": "5.2.4"
     },
     "devDependencies": {
         "eslint": "^8.52.0",

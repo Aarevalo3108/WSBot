@@ -4,9 +4,9 @@ const { getMonitor } = require("consulta-dolar-venezuela");
 const BaileysProvider = require('@bot-whatsapp/provider/baileys')
 const MockAdapter = require('@bot-whatsapp/database/mock')
 const schedule = require('node-schedule')
-const saludo = ['hola','alo','buenas','saludos']
+let dolar = [];
 const main = async () => {
-  let dolar = []
+  await consulta(dolar)
   const adapterDB = new MockAdapter()
   const adapterFlow = createFlow([flowSaludo, flowDolar,flowCalculo])
   const adapterProvider = createProvider(BaileysProvider)
@@ -29,9 +29,10 @@ const main = async () => {
   schedule.scheduleJob(rule, async () => {
     await consulta(dolar)
     await sendRate()
+    console.log(`Dolar actualizado!`);
   })
 }
-const flowSaludo = addKeyword(saludo)
+const flowSaludo = addKeyword(['hola','alo','buenas','saludos'])
 .addAnswer
 ([
   `🙌 Hola bienvenido a *DolarBot* (de momento, unica funcion), es un proyecto prueba que estoy desarrollando para enviar mensajes automaticos. Hecho por Angel Arevalo :D.
@@ -41,18 +42,13 @@ const flowSaludo = addKeyword(saludo)
 const flowDolar = addKeyword(['dolar','dólar'])
 .addAnswer('momento!...🧐',null,
   async (_,{flowDynamic}) =>{
-    let dolar = [];
-    await consulta(dolar);
     return flowDynamic([{body: '[PAR]: ' + dolar[0] +' Bs.\n[BCV]: ' + dolar[1]+' Bs.'}])
   }
 )
 const flowCalculo = addKeyword(['calcular','calculo','cuenta'])
 .addAnswer('Ingresa un monto en dolares para convertir!. Ejemplo: 7.5',{capture: true},
 async (ctx,{flowDynamic, fallBack}) =>{
-    nro = Number(ctx.body)
-    let dolar = [];
-    if(!isNaN(nro) && Math.sign(nro) == 1) {
-      await consulta(dolar)
+    if(!isNaN(Number(ctx.body)) && Math.sign(Number(ctx.body)) == 1) {
       return flowDynamic([{body: ctx.body + '$ a Bs es:\n[PAR]: ' + (ctx.body*dolar[0]).toFixed(2) +' Bs.\n[BCV]: ' + (ctx.body*dolar[1]).toFixed(2)+' Bs.'}])
     }
     else return fallBack()
@@ -61,6 +57,7 @@ async (ctx,{flowDynamic, fallBack}) =>{
 async function consulta(array) {
   array[0] = await getMonitor('enparalelovzla', 'price', false);
   array[1] = await getMonitor('bcv', 'price', false);
+  console.log(`Dolar actualizado.`)
   return array;
 }
 
